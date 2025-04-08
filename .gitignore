@@ -1,0 +1,11 @@
+# Ignore doc/ folder contents
+/doc/*
+# But NOT these files:
+!/doc/SplitWise.html
+!/doc/manual.pdf
+inst/doc
+/Meta/
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
