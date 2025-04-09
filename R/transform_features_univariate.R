@@ -10,17 +10,28 @@
 #' @keywords internal
 #'
 transform_features_univariate <- function(X, decisions) {
+
   transformed <- X[, FALSE]
 
   for (col_name in names(decisions)) {
     decision <- decisions[[col_name]]
-    if (decision$type == "linear") {
-      transformed[[col_name]] <- X[[col_name]]
-    } else {
-      cutoff_val <- decision$cutoff
-      dummy_name <- paste0(col_name, "_dummy")
-      transformed[[dummy_name]] <- as.numeric(X[[col_name]] >= cutoff_val)
+
+    # Always keep the original numeric column
+    transformed[[col_name]] <- X[[col_name]]
+
+    if (decision$type == "dummy") {
+      # Create a single 'range' dummy from the min & max of cutoffs
+      cutoffs <- decision$cutoffs
+      if (!is.null(cutoffs) && length(cutoffs) >= 1) {
+        d_col <- as.numeric(
+          X[[col_name]] >= min(cutoffs) &
+            X[[col_name]] <= max(cutoffs)
+        )
+        dummy_name <- paste0(col_name, "_dummy")
+        transformed[[dummy_name]] <- d_col
+      }
     }
   }
+
   return(transformed)
 }

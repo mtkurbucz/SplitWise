@@ -16,29 +16,30 @@
 #' @keywords internal
 #'
 decide_variable_type_univariate <- function(X, Y, minsplit = 5) {
+
   decisions <- list()
 
   for (col_name in names(X)) {
     temp_df <- data.frame(x = X[[col_name]], y = Y)
 
-    # Force maxdepth=2 => at most one meaningful split
     tree_model <- rpart::rpart(
       y ~ x,
       data = temp_df,
+      model = TRUE,  # store data in the model
       control = rpart::rpart.control(maxdepth = 2, minsplit = minsplit)
     )
 
     if (!is.null(tree_model$splits) && nrow(tree_model$splits) >= 1) {
-      single_cut <- tree_model$splits[1, "index"]
+      split_points <- unique(tree_model$splits[, "index"])
       decisions[[col_name]] <- list(
-        type       = "dummy",
-        cutoff     = single_cut,
+        type     = "dummy",
+        cutoffs  = split_points,
         tree_model = tree_model
       )
     } else {
       decisions[[col_name]] <- list(
-        type       = "linear",
-        cutoff     = NULL,
+        type     = "linear",
+        cutoffs  = NULL,
         tree_model = tree_model
       )
     }

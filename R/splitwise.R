@@ -71,7 +71,7 @@ splitwise <- function(
     decisions <- decide_variable_type_univariate(X, Y, minsplit = minsplit)
     X_trans   <- transform_features_univariate(X, decisions)
   } else {
-    # iterative approach
+    # iterative approach (assume you already have these functions)
     decisions <- decide_variable_type_iterative(X, Y, minsplit = minsplit, direction = direction, ...)
     X_trans   <- transform_features_iterative(X, decisions)
   }
@@ -128,10 +128,9 @@ print.splitwise_lm <- function(x, ...) {
   cat("Call:\n")
   print(x$splitwise_info$call)
 
-  # Identify variables encoded as dummy
   dummies <- names(Filter(function(d) d$type == "dummy", x$splitwise_info$decisions))
   if (length(dummies) > 0) {
-    cat("\nVariables encoded as dummy:\n")
+    cat("\nVariables that were flagged as dummy:\n")
     cat(" ", paste(dummies, collapse = ", "), "\n")
   } else {
     cat("\nNo variables were dummy encoded.\n")
@@ -152,17 +151,24 @@ print.splitwise_lm <- function(x, ...) {
 #' @export
 #'
 summary.splitwise_lm <- function(object, ...) {
-  cat("=== SplitWise Linear Model Summary ===\n\n")
+
+  # Compute the base summary of the lm object
+  base_summary <- summary.lm(object, ...)
+
+  # Print the standard summary
+  print(base_summary)
+
+  # Add your custom info
+  cat("<< SplitWise Information >>\n")
   cat("Transformation Mode:", object$splitwise_info$transformation_mode, "\n")
 
-  # Display base summary
-  base_summary <- NextMethod("summary", object)
-
-  cat("\n[SplitWise Information]\n")
   dummies <- names(Filter(function(d) d$type == "dummy", object$splitwise_info$decisions))
-  cat("Dummy-encoded variables:",
-      if (length(dummies) > 0) paste(dummies, collapse = ", ") else "None",
-      "\n")
+  if (length(dummies) > 0) {
+    cat("Dummy-encoded variables:", paste(dummies, collapse = ", "), "\n")
+  } else {
+    cat("Dummy-encoded variables: None\n")
+  }
+
   cat("Final AIC:", stats::AIC(object), "\n")
 
   invisible(base_summary)
