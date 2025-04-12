@@ -7,7 +7,7 @@
 splitwise(
   formula,
   data,
-  transformation_mode = c("univariate", "iterative"),
+  transformation_mode = c("iterative", "univariate"),
   direction = c("backward", "forward", "both"),
   minsplit = 5,
   criterion = c("AIC", "BIC"),

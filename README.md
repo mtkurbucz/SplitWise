@@ -6,8 +6,9 @@
 <!-- badges: start -->
 <!-- badges: end -->
 
-**SplitWise** implements a hybrid stepwise regression approach with single-split dummy encoding. It allows numeric variables to be represented either as continuous predictors or converted into binary (0/1) indicators via data-driven splitting. The package also includes an *iterative mode* to detect partial synergies among predictors, enhancing model interpretability and performance.
+**SplitWise** is a hybrid stepwise regression package that intelligently transforms numeric predictors using single-split or double-split dummy encoding. Each variable can be retained in its linear form or transformed into binary indicators based on model fit, evaluated by **AIC** or **BIC**.
 
+The package also supports an *iterative mode* to detect synergies among predictors — enabling more context-aware transformations and interpretable models.
 
 ## 🔧 Installation
 
@@ -25,22 +26,25 @@ devtools::install_github("mtkurbucz/SplitWise")
 library(SplitWise)
 data(mtcars)
 
-# Simple (univariate) transformation
+# Univariate transformation (backward selection using AIC)
 model_uni <- splitwise(
   mpg ~ .,
   data = mtcars,
   transformation_mode = "univariate",
   direction = "backward",
+  criterion = "AIC",
   trace = 0
 )
 summary(model_uni)
 
-# Iterative (forward selection with synergy detection)
+# Iterative transformation (forward selection using BIC)
 model_iter <- splitwise(
   mpg ~ .,
   data = mtcars,
   transformation_mode = "iterative",
   direction = "forward",
+  criterion = "BIC",
+  k = log(nrow(mtcars)), # BIC penalty
   trace = 0
 )
 print(model_iter)
@@ -48,15 +52,19 @@ print(model_iter)
 
 ## 📘 Features
 
-- Converts numeric variables into optimal binary dummies (0/1) using rpart
-- Supports forward, backward, or both stepwise selection (stats::step)
-- Offers univariate and iterative transformation strategies
-- Custom print() and summary() methods for easy inspection
+- Automatic dummy transformation: Converts numeric variables into binary (0/1) indicators via data-driven thresholds using rpart.
+- Stepwise model selection: Works with stats::step() to support forward, backward, or both directions.
+- Iterative synergy detection: Evaluates transformations in the context of other predictors.
+- Model selection criteria: Choose between AIC (default) or BIC via criterion argument.
+- Exclude variables: Prevent specific predictors from being split using exclude_vars.
+- Custom summary and print methods: Clearly shows transformation logic and model quality.
 
 ## 📄 Documentation
 
-- Function manual: see `man/`
-- Vignette: usage example provided in `vignettes/` and `inst/doc/`
+- Function help: see `?splitwise` and other `?` functions
+- Vignette: `vignette("Using the SplitWise Package with the mtcars Dataset")`
+- Manual files: `man/` folder
+- Additional examples: see `tests/` and `inst/doc/`
 
 ## 📜 License
 
