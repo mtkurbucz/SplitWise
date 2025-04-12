@@ -6,9 +6,9 @@
 <!-- badges: start -->
 <!-- badges: end -->
 
-**SplitWise** is a hybrid stepwise regression package that intelligently transforms numeric predictors using single-split or double-split dummy encoding. Each variable can be retained in its linear form or transformed into binary indicators based on model fit, evaluated by **AIC** or **BIC**.
+SplitWise is a hybrid stepwise regression package that intelligently transforms numeric predictors using single- or double-split dummy encoding. Each variable can be retained as a continuous feature or transformed into a binary indicator based on model fit, evaluated using AIC or BIC.
 
-The package also supports an *iterative mode* to detect synergies among predictors — enabling more context-aware transformations and interpretable models.
+By default, SplitWise uses an **iterative transformation mode**, which evaluates each variable in the context of others — enabling more accurate and interpretable models by capturing feature synergies. For faster execution on large datasets, a simpler **univariate mode** is also available, which transforms each variable independently (though it may lead to less optimal results).
 
 ## 🔧 Installation
 
