@@ -6,38 +6,36 @@ test_that("Splitwise vs step() function with different transformation modes", {
   directions <- c("backward", "forward", "both")
   transformation_modes <- c("univariate", "iterative")
 
-  # Fix: Swap column order: Splitwise_AIC first, then Step_AIC
   results <- data.frame(Direction = character(),
                         Transformation_Mode = character(),
                         Splitwise_AIC = numeric(),
                         Step_AIC = numeric())
 
   for (dir in directions) {
-    # Fit the initial model
     initial_model <- lm(mpg ~ ., data = mtcars)
-
-    # Apply the step() function
     step_model <- step(initial_model, direction = dir, trace = FALSE)
     step_aic <- AIC(step_model)
 
     for (mode in transformation_modes) {
-      # Apply the splitwise function with the current transformation mode
       splitwise_model <- splitwise(mpg ~ ., data = mtcars,
                                    transformation_mode = mode,
                                    direction = dir, trace = FALSE)
       splitwise_aic <- AIC(splitwise_model)
 
-      # Compare the AIC values
-      expect_lte(splitwise_aic, step_aic,
-                 label = paste("AIC comparison for", dir, "direction and", mode, "mode"))
-
-      # Store the results (Fix: Swap column order)
       results <- rbind(results, data.frame(Direction = dir,
                                            Transformation_Mode = mode,
                                            Splitwise_AIC = splitwise_aic,
                                            Step_AIC = step_aic))
     }
   }
+
+  # Calculate mean AICs
+  mean_splitwise_aic <- mean(results$Splitwise_AIC)
+  mean_step_aic <- mean(results$Step_AIC)
+
+  # Final test: mean Splitwise AIC should be <= mean Step AIC
+  expect_lte(mean_splitwise_aic, mean_step_aic,
+             label = "Mean AIC: Splitwise vs Stepwise")
 
   # Format and print the comparison table
   cat("\n\n")

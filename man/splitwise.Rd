@@ -2,8 +2,6 @@
 % Please edit documentation in R/splitwise.R
 \name{splitwise}
 \alias{splitwise}
-\alias{print.splitwise_lm}
-\alias{summary.splitwise_lm}
 \title{SplitWise Regression}
 \usage{
 splitwise(
@@ -12,15 +10,14 @@ splitwise(
   transformation_mode = c("univariate", "iterative"),
   direction = c("backward", "forward", "both"),
   minsplit = 5,
+  criterion = c("AIC", "BIC"),
+  exclude_vars = NULL,
+  verbose = FALSE,
   trace = 1,
   steps = 1000,
   k = 2,
   ...
 )
-
-\method{print}{splitwise_lm}(x, ...)
-
-\method{summary}{splitwise_lm}(object, ...)
 }
 \arguments{
 \item{formula}{A formula specifying the response and (initial) predictors, e.g. \code{mpg ~ .}.}
@@ -31,60 +28,59 @@ splitwise(
 
 \item{direction}{Stepwise direction: \code{"backward"}, \code{"forward"}, or \code{"both"}.}
 
-\item{minsplit}{Control for the rpart trees (min # obs in node).}
+\item{minsplit}{Minimum number of observations in a node to consider splitting. Default = 5.}
 
-\item{trace}{If positive, \code{step()} prints info at each step.}
+\item{criterion}{Either \code{"AIC"} or \code{"BIC"}. Default = \code{"AIC"}.
+\strong{Note}: If you choose \code{"BIC"}, you typically want \code{k = log(nrow(data))} in stepwise.}
 
-\item{steps}{Maximum number of steps for \code{step()}.}
+\item{exclude_vars}{A character vector naming variables that should be forced to remain linear
+(i.e., no dummy splits allowed). Default = \code{NULL}.}
 
-\item{k}{Penalty multiple for the number of degrees of freedom (e.g. 2 for AIC, log(n) for BIC).}
+\item{verbose}{Logical; if \code{TRUE}, prints debug info in transformation steps. Default = \code{FALSE}.}
 
-\item{...}{Additional arguments passed to \code{summary.lm}.}
+\item{trace}{If positive, \code{step()} prints info at each step. Default = 1.}
 
-\item{x}{A \code{"splitwise_lm"} object returned by \code{splitwise}.}
+\item{steps}{Maximum number of steps for \code{step()}. Default = 1000.}
 
-\item{object}{A \code{"splitwise_lm"} object returned by \code{splitwise}.}
+\item{k}{Penalty multiple for the number of degrees of freedom (used by \code{step()}).
+E.g. 2 for AIC, \code{log(n)} for BIC. Default = 2.}
+
+\item{...}{Additional arguments passed to \code{step()} or the iterative function.}
 }
 \value{
 An S3 object of class \code{c("splitwise_lm", "lm")}, storing:
-  \item{splitwise_info}{List containing transformation decisions, final data, and call.}
+\item{splitwise_info}{List containing transformation decisions, final data, and call.}
 }
 \description{
 Transforms each numeric variable into either a single-split dummy or keeps it linear,
-  then runs \code{stats::step()} to do stepwise selection.
-  The user can choose a simpler univariate transformation or an iterative approach.
+then runs \code{stats::step()} for stepwise selection. The user can choose a
+simpler univariate transformation or an iterative approach.
 }
-\section{Functions}{
-\itemize{
-\item \code{print(splitwise_lm)}: Prints a summary of the splitwise_lm object.
-
-\item \code{summary(splitwise_lm)}: Provides a detailed summary of the splitwise_lm object.
-
-}}
 \examples{
 # Load the mtcars dataset
 data(mtcars)
 
-# Univariate transformations
+# Univariate transformations (AIC-based, backward stepwise)
 model_uni <- splitwise(
   mpg ~ .,
-  data = mtcars,
+  data               = mtcars,
   transformation_mode = "univariate",
-  direction = "backward",
-  trace = 0
+  direction           = "backward",
+  trace               = 0
 )
 summary(model_uni)
-print(model_uni)
 
-# Iterative approach
+# Iterative approach (BIC-based, forward stepwise)
+# Note: typically set k = log(nrow(mtcars)) for BIC in step().
 model_iter <- splitwise(
   mpg ~ .,
-  data = mtcars,
+  data               = mtcars,
   transformation_mode = "iterative",
-  direction = "forward",
-  trace = 0
+  direction           = "forward",
+  criterion           = "BIC",
+  k                   = log(nrow(mtcars)),
+  trace               = 0
 )
 summary(model_iter)
-print(model_iter)
 
 }

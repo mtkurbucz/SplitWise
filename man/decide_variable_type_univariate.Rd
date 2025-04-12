@@ -4,24 +4,49 @@
 \alias{decide_variable_type_univariate}
 \title{Decide Variable Type (Univariate)}
 \usage{
-decide_variable_type_univariate(X, Y, minsplit = 5)
+decide_variable_type_univariate(
+  X,
+  Y,
+  minsplit = 5,
+  criterion = c("AIC", "BIC"),
+  exclude_vars = NULL,
+  verbose = FALSE
+)
 }
 \arguments{
-\item{X}{A data frame of predictors (no response).}
+\item{X}{A data frame of numeric predictors (no response).}
 
-\item{Y}{A numeric vector (the response).}
+\item{Y}{A numeric response vector.}
 
-\item{minsplit}{Minimum number of observations in a node to consider splitting. Default 5.}
+\item{minsplit}{Minimum number of observations in a node to consider splitting. Default = 5.}
+
+\item{criterion}{A character string: either \code{"AIC"} or \code{"BIC"}. Default = \code{"AIC"}.}
+
+\item{exclude_vars}{A character vector of variable names to exclude from dummy transformations.
+These variables will always be treated as linear. Default = \code{NULL}.}
+
+\item{verbose}{Logical; if \code{TRUE}, prints messages for debugging. Default = \code{FALSE}.}
 }
 \value{
-A named list of decisions, where each element contains:
-  \item{type}{Either "dummy" or "linear".}
-  \item{cutoff}{The split value (if type == "dummy").}
-  \item{tree_model}{The fitted rpart model (for reference).}
+A named list of decisions, where each element is a list with:
+\describe{
+  \item{type}{Either \code{"dummy"} or \code{"linear"}.}
+  \item{cutoffs}{A numeric vector (length 1 or 2) if \code{type = "dummy"}, or \code{NULL} if linear.}
+  \item{tree_model}{The fitted \code{rpart} model (for reference) or \code{NULL} if excluded.}
+}
 }
 \description{
-For each numeric predictor, fit a shallow (maxdepth=2) rpart tree against \code{Y}.
-  If at least one split is found, mark it as "dummy", otherwise "linear".
-  Used in the "simple" or "univariate" transformation mode.
+For each numeric predictor, this function fits a shallow (\code{maxdepth = 2}) \code{rpart} tree
+directly on \code{Y ~ x} and tests whether a dummy transformation improves model fit.
+}
+\details{
+Dummy forms come from a shallow (\code{maxdepth = 2}) \code{rpart} tree fit to the data. We extract up to two splits:
+\itemize{
+  \item Single cutoff dummy (e.g., \code{x >= c})
+  \item Double cutoff dummy (e.g., \code{c1 < x < c2})
+}
+The function then picks the form (linear, single-split dummy, or double-split dummy)
+that yields the lowest AIC/BIC. If a variable is listed in \code{exclude_vars}, it will always be used
+as a linear predictor (dummy transformation is never attempted).
 }
 \keyword{internal}
