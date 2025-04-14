@@ -39,6 +39,27 @@ The `mtcars` dataset is a built-in R dataset that comprises fuel consumption and
 data(mtcars)
 ```
 
+# Iterative Transformations
+
+The iterative transformation approach evaluates each variable's transformation in the context of variables already added to the model. Here is an example using forward stepwise selection:
+
+```{r iterative-transformation}
+# Apply iterative transformations with forward stepwise selection
+model_iter <- splitwise(
+  mpg ~ .,
+  data = mtcars,
+  transformation_mode = "iterative",
+  direction = "backward",
+  trace = 0
+)
+
+# Display the summary of the model
+summary(model_iter)
+
+# Print the model details
+print(model_iter)
+```
+
 # Univariate Transformations
 
 In the univariate transformation approach, each numeric predictor is transformed independently without considering the context of other variables. Below is an example of applying univariate transformations with backward stepwise selection:
@@ -58,27 +79,6 @@ summary(model_uni)
 
 # Print the model details
 print(model_uni)
-```
-
-# Iterative Transformations
-
-The iterative transformation approach evaluates each variable's transformation in the context of variables already added to the model. Here is an example using forward stepwise selection:
-
-```{r iterative-transformation}
-# Apply iterative transformations with forward stepwise selection
-model_iter <- splitwise(
-  mpg ~ .,
-  data = mtcars,
-  transformation_mode = "iterative",
-  direction = "forward",
-  trace = 0
-)
-
-# Display the summary of the model
-summary(model_iter)
-
-# Print the model details
-print(model_iter)
 ```
 
 # Conclusion

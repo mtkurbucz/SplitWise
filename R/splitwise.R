@@ -6,7 +6,7 @@
 #'
 #' @param formula A formula specifying the response and (initial) predictors, e.g. \code{mpg ~ .}.
 #' @param data A data frame containing the variables used in \code{formula}.
-#' @param transformation_mode Either \code{"univariate"} or \code{"iterative"}.
+#' @param transformation_mode Either \code{"iterative"} or \code{"univariate"}. Default = \code{"iterative"}.
 #' @param direction Stepwise direction: \code{"backward"}, \code{"forward"}, or \code{"both"}.
 #' @param minsplit Minimum number of observations in a node to consider splitting. Default = 5.
 #' @param criterion Either \code{"AIC"} or \code{"BIC"}. Default = \code{"AIC"}.
@@ -138,4 +138,122 @@ splitwise <- function(
 
   class(step_model) <- c("splitwise_lm", class(step_model))
   return(step_model)
+}
+
+# ------------------------------------------------------------------------------
+
+#' @title Print Method for SplitWise Linear Model
+#'
+#' @param x A \code{"splitwise_lm"} object returned by \code{splitwise}.
+#' @param ... Additional arguments (unused).
+#' @describeIn splitwise Prints a summary of the splitwise_lm object.
+#' @export
+#'
+print.splitwise_lm <- function(x, ...) {
+  cat("SplitWise Linear Models\n")
+  cat("Transformation mode:", x$splitwise_info$transformation_mode, "\n")
+  cat("Call:\n")
+  print(x$splitwise_info$call)
+
+  # Grab all decisions
+  decisions <- x$splitwise_info$decisions
+
+  # Filter out the dummy ones
+  dummy_vars <- names(Filter(function(d) d$type == "dummy", decisions))
+
+  if (length(dummy_vars) > 0) {
+    cat("\nDummy-Encoded Variables:\n")
+    for (var_name in dummy_vars) {
+      cut_vals <- decisions[[var_name]]$cutoff
+      if (length(cut_vals) == 1) {
+        # Single cutoff: 1 if x >= cutoff
+        cat("  -", var_name,
+            ": 1 if x >= ",
+            format(round(cut_vals, 3), nsmall = 3),
+            "; else 0\n"
+        )
+      } else if (length(cut_vals) == 2) {
+        # Range dummy: 1 if lower < x < upper
+        lower_val <- round(cut_vals[1], 3)
+        upper_val <- round(cut_vals[2], 3)
+        cat("  -", var_name,
+            ": 1 if ", lower_val, " < x < ", upper_val,
+            "; else 0\n"
+        )
+      } else {
+        # fallback if something else is stored
+        cat("  -", var_name, ": (unknown dummy definition?)\n")
+      }
+    }
+  } else {
+    cat("\nNo variables were dummy encoded.\n")
+  }
+
+  cat("\nCoefficients:\n")
+  print(stats::coef(x))
+
+  # Print both AIC & BIC for clarity
+  cat("\nModel Fit Statistics:\n")
+  cat("  AIC:", format(stats::AIC(x), digits = 5), "\n")
+  cat("  BIC:", format(stats::BIC(x), digits = 5), "\n")
+
+  invisible(x)
+}
+
+# ------------------------------------------------------------------------------
+
+#' @title Summary Method for SplitWise Linear Model (Fancy)
+#'
+#' @param object A \code{"splitwise_lm"} object returned by \code{splitwise}.
+#' @param ... Additional arguments passed to \code{summary.lm}.
+#' @describeIn splitwise Provides a detailed summary, including how dummies were created.
+#' @export
+#'
+summary.splitwise_lm <- function(object, ...) {
+
+  # 1) Print the standard lm summary
+  base_summary <- summary.lm(object, ...)
+  print(base_summary)
+
+  # 2) Grab transformations + produce custom info
+  cat("Transformation Mode:", object$splitwise_info$transformation_mode, "\n")
+
+  # Identify dummy variables
+  decisions   <- object$splitwise_info$decisions
+  dummy_vars  <- names(Filter(function(d) d$type == "dummy", decisions))
+
+  if (length(dummy_vars) > 0) {
+    cat("\nDummy-Encoded Variables:\n")
+    for (var_name in dummy_vars) {
+      cut_vals <- decisions[[var_name]]$cutoff
+
+      if (length(cut_vals) == 1) {
+        # Single cutoff: "1 if x >= cutoff"
+        cat("  -", var_name,
+            ": 1 if x >=",
+            format(round(cut_vals, 3), nsmall = 3),
+            "; else 0\n"
+        )
+      } else if (length(cut_vals) == 2) {
+        # Range dummy: "1 if a < x < b"
+        lower_val <- format(round(min(cut_vals), 3), nsmall = 3)
+        upper_val <- format(round(max(cut_vals), 3), nsmall = 3)
+        cat("  -", var_name,
+            ": 1 if", lower_val, "< x <", upper_val,
+            "; else 0\n"
+        )
+      } else {
+        # Fallback if something else is stored
+        cat("  -", var_name, ": (unknown dummy definition?)\n")
+      }
+    }
+  } else {
+    cat("\nNo variables were dummy encoded.\n")
+  }
+
+  # Print both AIC & BIC for clarity
+  cat("\nFinal AIC:", format(stats::AIC(object), digits = 5), "\n")
+  cat("Final BIC:", format(stats::BIC(object), digits = 5), "\n")
+
+  invisible(base_summary)
 }

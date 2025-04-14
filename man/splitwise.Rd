@@ -2,6 +2,8 @@
 % Please edit documentation in R/splitwise.R
 \name{splitwise}
 \alias{splitwise}
+\alias{print.splitwise_lm}
+\alias{summary.splitwise_lm}
 \title{SplitWise Regression}
 \usage{
 splitwise(
@@ -18,13 +20,17 @@ splitwise(
   k = 2,
   ...
 )
+
+\method{print}{splitwise_lm}(x, ...)
+
+\method{summary}{splitwise_lm}(object, ...)
 }
 \arguments{
 \item{formula}{A formula specifying the response and (initial) predictors, e.g. \code{mpg ~ .}.}
 
 \item{data}{A data frame containing the variables used in \code{formula}.}
 
-\item{transformation_mode}{Either \code{"univariate"} or \code{"iterative"}.}
+\item{transformation_mode}{Either \code{"iterative"} or \code{"univariate"}. Default = \code{"iterative"}.}
 
 \item{direction}{Stepwise direction: \code{"backward"}, \code{"forward"}, or \code{"both"}.}
 
@@ -45,7 +51,11 @@ splitwise(
 \item{k}{Penalty multiple for the number of degrees of freedom (used by \code{step()}).
 E.g. 2 for AIC, \code{log(n)} for BIC. Default = 2.}
 
-\item{...}{Additional arguments passed to \code{step()} or the iterative function.}
+\item{...}{Additional arguments passed to \code{summary.lm}.}
+
+\item{x}{A \code{"splitwise_lm"} object returned by \code{splitwise}.}
+
+\item{object}{A \code{"splitwise_lm"} object returned by \code{splitwise}.}
 }
 \value{
 An S3 object of class \code{c("splitwise_lm", "lm")}, storing:
@@ -56,6 +66,13 @@ Transforms each numeric variable into either a single-split dummy or keeps it li
 then runs \code{stats::step()} for stepwise selection. The user can choose a
 simpler univariate transformation or an iterative approach.
 }
+\section{Functions}{
+\itemize{
+\item \code{print(splitwise_lm)}: Prints a summary of the splitwise_lm object.
+
+\item \code{summary(splitwise_lm)}: Provides a detailed summary, including how dummies were created.
+
+}}
 \examples{
 # Load the mtcars dataset
 data(mtcars)
