@@ -4,6 +4,7 @@
 # 📦 SplitWise R Package
 
 <!-- badges: start -->
+[![R CMD check via R-hub](https://github.com/mtkurbucz/SplitWise/actions/workflows/rhub.yaml/badge.svg)](https://github.com/mtkurbucz/SplitWise/actions/workflows/rhub.yaml)
 <!-- badges: end -->
 
 SplitWise is a hybrid stepwise regression package that intelligently transforms numeric predictors using single- or double-split dummy encoding. Each variable can be retained as a continuous feature or transformed into a binary indicator based on model fit, evaluated using AIC or BIC.
