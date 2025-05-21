@@ -3,7 +3,7 @@ Type: Package
 Title: Hybrid Stepwise Regression with Single-Split Dummy Encoding
 Version: 1.0.0
 Authors@R: c(
-  person("Marcell T.", "Kurbucz", email = "mkurbucz@worldbank.org", role = c("aut", "cre")),
+  person("Marcell T.", "Kurbucz", email = "m.kurbucz@ucl.ac.uk", role = c("aut", "cre")),
   person("Nikolaos", "Tzivanakis", role = "aut"),
   person("Nilufer Sari", "Aslam", role = "aut"),
   person("Adam", "Sykulski", role = "aut"))
