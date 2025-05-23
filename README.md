@@ -1,18 +1,21 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# 📦 SplitWise R Package
+# SplitWise R Package
 
 <!-- badges: start -->
 [![R CMD check via R-hub](https://github.com/mtkurbucz/SplitWise/actions/workflows/rhub.yaml/badge.svg)](https://github.com/mtkurbucz/SplitWise/actions/workflows/rhub.yaml)
 <!-- badges: end -->
 
-SplitWise is a hybrid stepwise regression package that intelligently transforms numeric predictors using single- or double-split dummy encoding. Each variable can be retained as a continuous feature or transformed into a binary indicator based on model fit, evaluated using AIC or BIC.
+SplitWise is a hybrid stepwise regression package that intelligently transforms numeric predictors using single- or double-split dummy encoding. Each variable can be retained as a continuous feature or transformed into binary indicators based on model fit, evaluated using AIC or BIC.
 
-By default, SplitWise uses an **iterative transformation mode**, which evaluates each variable in the context of others—enabling more accurate and interpretable models by capturing feature synergies. For faster execution on large datasets, a simpler **univariate mode** is also available, which transforms each variable independently; while computationally efficient, this mode may miss interactions captured by the iterative approach.
+By default, SplitWise uses an iterative transformation mode, which evaluates each variable in the context of others—enabling more accurate and interpretable models by capturing feature synergies. For faster execution on large datasets, a simpler univariate mode is also available, which transforms each variable independently. While computationally efficient, this mode may miss interactions captured by the iterative approach.
 
+<blockquote style="font-size: 85%; font-style: italic; border: 1px solid #ccc; padding: 10px; background-color: #f9f9f9;">
+For a full description of the methodology, see the accompanying arXiv preprint: Kurbucz, Marcell T.; Tzivanakis, Nikolaos; Aslam, Nilufer Sari; Sykulski, Adam M. (2025). <i>SplitWise Regression: Stepwise Modeling with Adaptive Dummy Encoding.</i> arXiv preprint <a href="https://arxiv.org/abs/2505.15423">https://arxiv.org/abs/2505.15423</a>.
+</blockquote>
 
-## 🔧 Installation
+## Installation
 
 To install from GitHub:
 
@@ -22,7 +25,7 @@ install.packages("devtools")
 devtools::install_github("mtkurbucz/SplitWise")
 ```
 
-## 🚀 Usage
+## Usage
 
 ``` r
 library(SplitWise)
@@ -52,22 +55,18 @@ model_iter <- splitwise(
 print(model_iter)
 ```
 
-## 📘 Features
+## Further Documentation
 
-- Automatic dummy transformation: Converts numeric variables into binary (0/1) indicators via data-driven thresholds using rpart.
-- Stepwise model selection: Works with stats::step() to support forward, backward, or both directions.
-- Iterative synergy detection: Evaluates transformations in the context of other predictors.
-- Model selection criteria: Choose between AIC (default) or BIC via criterion argument.
-- Exclude variables: Prevent specific predictors from being split using exclude_vars.
-- Custom summary and print methods: Clearly shows transformation logic and model quality.
+A pdf manual with additional documentation and html file with example use are provided in [/docs/](./docs/).
 
-## 📄 Documentation
+## Citation
 
-- Function help: see `?splitwise` and other `?` functions
-- Vignette: `vignette("Using the SplitWise Package with the mtcars Dataset")`
-- Manual files: `man/` folder
-- Additional examples: see `tests/` and `inst/doc/`
+If you use `SplitWise` in your research, please cite:
 
-## 📜 License
+<blockquote style="font-size: 85%; font-style: italic; border: 1px solid #ccc; padding: 10px; background-color: #f9f9f9;">
+Kurbucz, Marcell T.; Tzivanakis, Nikolaos; Aslam, Nilufer Sari; Sykulski, Adam M. (2025). <i>SplitWise Regression: Stepwise Modeling with Adaptive Dummy Encoding.</i> arXiv preprint <a href="https://arxiv.org/abs/2505.15423">https://arxiv.org/abs/2505.15423</a>.
+</blockquote>
+
+## License
 
 This package is licensed under the GPL-3 License.
