@@ -1,7 +1,7 @@
 Package: SplitWise
 Type: Package
 Title: 'SplitWise': Hybrid Stepwise Regression with Single-Split Dummy Encoding
-Version: 1.0.0
+Version: 1.0.1
 Authors@R: c(
   person("Marcell T.", "Kurbucz", email = "m.kurbucz@ucl.ac.uk", role = c("aut", "cre")),
   person("Nikolaos", "Tzivanakis", role = "aut"),
