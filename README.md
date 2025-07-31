@@ -57,7 +57,7 @@ print(model_iter)
 
 ## Further Documentation
 
-A pdf manual with additional documentation and html file with example use are provided in [/docs/](./docs/).
+Further documentation is available in the [doc/](https://github.com/mtkurbucz/SplitWise/tree/main/doc) folder on GitHub.
 
 ## Citation
 

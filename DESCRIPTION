@@ -13,7 +13,7 @@ Description: Implements 'SplitWise', a hybrid regression approach that transform
     selection to identify the most relevant variables. The default 'iterative'
     mode adaptively explores partial synergies among variables to enhance model
     performance, while an alternative 'univariate' mode applies simpler
-    transformations independently to each predictor. For details, see Kurbucz et al. (2025) <https://arxiv.org/abs/2505.15423>.
+    transformations independently to each predictor. For details, see Kurbucz et al. (2025) <doi:10.48550/arXiv.2505.15423>.
 License: GPL (>= 3)
 Encoding: UTF-8
 Depends: R (>= 3.5.0)
