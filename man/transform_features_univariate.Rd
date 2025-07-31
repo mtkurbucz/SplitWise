@@ -12,10 +12,12 @@ transform_features_univariate(X, decisions)
 \item{decisions}{The list returned by \code{decide_variable_type_univariate}.}
 }
 \value{
-A new data frame with either the original column or a dummy column for each variable.
+A new data frame with either the original column or a dummy column
+  for each variable.
 }
 \description{
-Given the decisions (dummy or linear) for each predictor, produce a transformed
-  data frame. Dummy columns are 0/1 based on the cutoff.
+Given the decisions (dummy or linear) for each predictor,
+  produce a transformed data frame. Dummy columns are 0/1 based on the
+  cutoff.
 }
 \keyword{internal}

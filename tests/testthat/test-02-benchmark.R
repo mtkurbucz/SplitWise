@@ -13,13 +13,13 @@ test_that("Splitwise vs step() function with different transformation modes", {
 
   for (dir in directions) {
     initial_model <- lm(mpg ~ ., data = mtcars)
-    step_model <- step(initial_model, direction = dir, trace = FALSE)
+    step_model <- step(initial_model, direction = dir, trace = 0)
     step_aic <- AIC(step_model)
 
     for (mode in transformation_modes) {
       splitwise_model <- splitwise(mpg ~ ., data = mtcars,
                                    transformation_mode = mode,
-                                   direction = dir, trace = FALSE)
+                                   direction = dir, verbose = FALSE)
       splitwise_aic <- AIC(splitwise_model)
 
       results <- rbind(results, data.frame(Direction = dir,

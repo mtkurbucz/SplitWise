@@ -1,6 +1,6 @@
 ---
 title: "Using the SplitWise Package with the mtcars Dataset"
-authors: "Marcell T. Kurbucz, Nikolaos Tzivanakis, Nilufer Sari Aslam, Adam Sykulski"
+authors: "Marcell T. Kurbucz, Nikolaos Tzivanakis, Nilufer Sari Aslam, Adam M. Sykulski"
 date: "`r Sys.Date()`"
 output:
   html_document:
@@ -50,7 +50,7 @@ model_iter <- splitwise(
   data = mtcars,
   transformation_mode = "iterative",
   direction = "backward",
-  trace = 0
+  verbose = FALSE
 )
 
 # Display the summary of the model
@@ -71,7 +71,7 @@ model_uni <- splitwise(
   data = mtcars,
   transformation_mode = "univariate",
   direction = "backward",
-  trace = 0
+  verbose = FALSE
 )
 
 # Display the summary of the model

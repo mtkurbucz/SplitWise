@@ -4,6 +4,11 @@
 \alias{splitwise}
 \alias{print.splitwise_lm}
 \alias{summary.splitwise_lm}
+\alias{predict.splitwise_lm}
+\alias{coef.splitwise_lm}
+\alias{fitted.splitwise_lm}
+\alias{residuals.splitwise_lm}
+\alias{model.matrix.splitwise_lm}
 \title{SplitWise Regression}
 \usage{
 splitwise(
@@ -11,11 +16,11 @@ splitwise(
   data,
   transformation_mode = c("iterative", "univariate"),
   direction = c("backward", "forward", "both"),
-  minsplit = 5,
+  min_support = 0.1,
+  min_improvement = 3,
   criterion = c("AIC", "BIC"),
   exclude_vars = NULL,
   verbose = FALSE,
-  trace = 1,
   steps = 1000,
   k = 2,
   ...
@@ -24,53 +29,96 @@ splitwise(
 \method{print}{splitwise_lm}(x, ...)
 
 \method{summary}{splitwise_lm}(object, ...)
+
+\method{predict}{splitwise_lm}(object, newdata, ...)
+
+\method{coef}{splitwise_lm}(object, ...)
+
+\method{fitted}{splitwise_lm}(object, ...)
+
+\method{residuals}{splitwise_lm}(object, ...)
+
+\method{model.matrix}{splitwise_lm}(object, ...)
 }
 \arguments{
-\item{formula}{A formula specifying the response and (initial) predictors, e.g. \code{mpg ~ .}.}
+\item{formula}{A formula specifying the response and (initial) predictors,
+e.g. \code{mpg ~ .}.}
 
 \item{data}{A data frame containing the variables used in \code{formula}.}
 
-\item{transformation_mode}{Either \code{"iterative"} or \code{"univariate"}. Default = \code{"iterative"}.}
+\item{transformation_mode}{Either \code{"iterative"} or \code{"univariate"}.
+Default = \code{"iterative"}.}
 
-\item{direction}{Stepwise direction: \code{"backward"}, \code{"forward"}, or \code{"both"}.}
+\item{direction}{Stepwise direction: \code{"backward"}, \code{"forward"}, or
+\code{"both"}.}
 
-\item{minsplit}{Minimum number of observations in a node to consider splitting. Default = 5.}
+\item{min_support}{Minimum fraction (between 0 and 0.5) of observations
+needed in either group when making a dummy split. Prevents over-fragmented
+or tiny dummy groups. Default = \code{0.1}.}
+
+\item{min_improvement}{Minimum required improvement (in AIC/BIC units) for
+accepting a dummy split or variable transformation. Helps guard against
+overfitting from marginal improvements. Default = \code{2}.}
 
 \item{criterion}{Either \code{"AIC"} or \code{"BIC"}. Default = \code{"AIC"}.
-\strong{Note}: If you choose \code{"BIC"}, you typically want \code{k = log(nrow(data))} in stepwise.}
+\strong{Note}: If you choose \code{"BIC"}, you typically want
+\code{k = log(nrow(data))} in stepwise.}
 
-\item{exclude_vars}{A character vector naming variables that should be forced to remain linear
-(i.e., no dummy splits allowed). Default = \code{NULL}.}
+\item{exclude_vars}{A character vector naming variables that should be
+forced to remain linear (i.e., no dummy splits allowed).
+Default = \code{NULL}.}
 
-\item{verbose}{Logical; if \code{TRUE}, prints debug info in transformation steps. Default = \code{FALSE}.}
-
-\item{trace}{If positive, \code{step()} prints info at each step. Default = 1.}
+\item{verbose}{Logical; if \code{TRUE}, prints debug info in transformation
+steps. If \code{FALSE}, the stepwise selection process is run quietly
+(trace = 0 in \code{step()}). Default = \code{FALSE}.}
 
 \item{steps}{Maximum number of steps for \code{step()}. Default = 1000.}
 
-\item{k}{Penalty multiple for the number of degrees of freedom (used by \code{step()}).
-E.g. 2 for AIC, \code{log(n)} for BIC. Default = 2.}
+\item{k}{Penalty multiple for the number of degrees of freedom
+(used by \code{step()}). E.g. 2 for AIC, \code{log(n)} for BIC.
+Default = 2.}
 
-\item{...}{Additional arguments passed to \code{summary.lm}.}
+\item{...}{Additional arguments passed to \code{predict.lm}.}
 
 \item{x}{A \code{"splitwise_lm"} object returned by \code{splitwise}.}
 
-\item{object}{A \code{"splitwise_lm"} object returned by \code{splitwise}.}
+\item{object}{An object of class \code{splitwise_lm}, as returned by
+\code{\link{splitwise}}.}
+
+\item{newdata}{A data frame of new data (with original predictors) to
+generate predictions for. The appropriate dummy variables will be
+generated using the transformation rules learned during model training. If
+omitted, predictions for the training data are returned.}
 }
 \value{
 An S3 object of class \code{c("splitwise_lm", "lm")}, storing:
-\item{splitwise_info}{List containing transformation decisions, final data, and call.}
+  \item{splitwise_info}{List containing transformation decisions, final
+  data, and call.}
 }
 \description{
-Transforms each numeric variable into either a single-split dummy or keeps it linear,
-then runs \code{stats::step()} for stepwise selection. The user can choose a
-simpler univariate transformation or an iterative approach.
+Transforms each numeric variable into either a single-split
+  dummy or keeps it linear, then runs \code{stats::step()} for stepwise
+  selection. The user can choose a simpler univariate transformation or an
+  iterative approach.
 }
 \section{Functions}{
 \itemize{
 \item \code{print(splitwise_lm)}: Prints a summary of the splitwise_lm object.
 
-\item \code{summary(splitwise_lm)}: Provides a detailed summary, including how dummies were created.
+\item \code{summary(splitwise_lm)}: Provides a detailed summary, including how dummies
+were created.
+
+\item \code{predict(splitwise_lm)}: Generate predictions from a \code{splitwise_lm} object
+using learned transformation rules.
+
+\item \code{coef(splitwise_lm)}: Extract model coefficients from a SplitWise linear
+model.
+
+\item \code{fitted(splitwise_lm)}: Extract fitted values from a SplitWise linear model.
+
+\item \code{residuals(splitwise_lm)}: Extract residuals from a SplitWise linear model.
+
+\item \code{model.matrix(splitwise_lm)}: Extract the model matrix from a SplitWise linear model.
 
 }}
 \examples{
@@ -82,8 +130,7 @@ model_uni <- splitwise(
   mpg ~ .,
   data               = mtcars,
   transformation_mode = "univariate",
-  direction           = "backward",
-  trace               = 0
+  direction           = "backward"
 )
 summary(model_uni)
 
@@ -95,9 +142,7 @@ model_iter <- splitwise(
   transformation_mode = "iterative",
   direction           = "forward",
   criterion           = "BIC",
-  k                   = log(nrow(mtcars)),
-  trace               = 0
+  k                   = log(nrow(mtcars))
 )
 summary(model_iter)
-
 }

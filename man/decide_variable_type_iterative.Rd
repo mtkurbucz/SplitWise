@@ -7,7 +7,8 @@
 decide_variable_type_iterative(
   X,
   Y,
-  minsplit = 5,
+  min_support = 0.1,
+  min_improvement = 3,
   direction = c("backward", "forward", "both"),
   criterion = c("AIC", "BIC"),
   exclude_vars = NULL,
@@ -20,16 +21,24 @@ decide_variable_type_iterative(
 
 \item{Y}{A numeric vector (the response).}
 
-\item{minsplit}{Minimum number of observations in a node to consider splitting. Default = 5.}
+\item{min_support}{Minimum fraction (0-0.5) of observations required in
+either group after a dummy split. Default = 0.1.}
 
-\item{direction}{Stepwise strategy: \code{"forward"}, \code{"backward"}, or \code{"both"}. Default = \code{"backward"}.}
+\item{min_improvement}{Minimum required improvement in AIC/BIC for accepting
+a dummy split or variable transformation. Default = 3.}
 
-\item{criterion}{A character string: either \code{"AIC"} or \code{"BIC"}. Default = \code{"AIC"}.}
+\item{direction}{Stepwise strategy: \code{"forward"}, \code{"backward"}, or
+\code{"both"}. Default = \code{"backward"}.}
 
-\item{exclude_vars}{A character vector of variable names to exclude from dummy transformations.
-These variables will always be treated as linear. Default = \code{NULL}.}
+\item{criterion}{A character string: either \code{"AIC"} or \code{"BIC"}.
+Default = \code{"AIC"}.}
 
-\item{verbose}{Logical; if \code{TRUE}, prints messages for debugging. Default = \code{FALSE}.}
+\item{exclude_vars}{A character vector of variable names to exclude from
+dummy transformations. These variables will always be treated as linear.
+Default = \code{NULL}.}
+
+\item{verbose}{Logical; if \code{TRUE}, prints messages for debugging.
+Default = \code{FALSE}.}
 
 \item{...}{Additional arguments (currently unused).}
 }
@@ -41,19 +50,27 @@ A named list of decisions, where each element is a list with:
 }
 }
 \description{
-A stepwise variable-selection method that iteratively chooses each variable's best form:
-\code{"linear"}, single-split \code{"dummy"}, or double-split ("middle=1") dummy,
-based on AIC/BIC improvement. Supports "forward", "backward", or "both" strategies.
+A stepwise variable-selection method that iteratively chooses
+  each variable's best form: \code{"linear"}, single-split \code{"dummy"},
+  or double-split ("middle=1") dummy, based on AIC/BIC improvement. Supports
+  "forward", "backward", or "both" strategies.
 }
 \details{
-Dummy forms come from a shallow (\code{maxdepth = 2}) \code{rpart} tree fit to the partial
-residuals of the current model. We extract up to two splits:
-\itemize{
-  \item Single cutoff dummy (e.g., \code{x >= c})
-  \item Double cutoff dummy (e.g., \code{c1 < x < c2})
-}
-The function then picks the form (linear, single-split dummy, or double-split dummy)
-that yields the lowest AIC/BIC. Variables listed in \code{exclude_vars} will be forced to remain
-linear (dummy transformations are never attempted).
+By default, no split is allowed with fewer than 5 observations
+  (i.e., minsplit is max(5, ceiling(min_support * n))). This is not
+  user-configurable.
+
+  Dummy forms come from a shallow (\code{maxdepth = 2})
+  \code{rpart} tree fit to the partial residuals of the current model. We
+  extract up to two splits:
+  \itemize{
+    \item Single cutoff dummy (e.g., \code{x >= c})
+    \item Double cutoff dummy (e.g., \code{c1 < x < c2})
+  }
+
+  The function then picks the form (linear, single-split dummy, or
+  double-split dummy) that yields the lowest AIC/BIC. Variables listed in
+  \code{exclude_vars} will be forced to remain linear (dummy transformations
+  are never attempted).
 }
 \keyword{internal}

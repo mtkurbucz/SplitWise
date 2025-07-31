@@ -1,44 +1,55 @@
 #' @title Decide Variable Type (Iterative)
 #'
-#' @description
-#' A stepwise variable-selection method that iteratively chooses each variable's best form:
-#' \code{"linear"}, single-split \code{"dummy"}, or double-split ("middle=1") dummy,
-#' based on AIC/BIC improvement. Supports "forward", "backward", or "both" strategies.
+#' @description A stepwise variable-selection method that iteratively chooses
+#'   each variable's best form: \code{"linear"}, single-split \code{"dummy"},
+#'   or double-split ("middle=1") dummy, based on AIC/BIC improvement. Supports
+#'   "forward", "backward", or "both" strategies.
+#' @details By default, no split is allowed with fewer than 5 observations
+#'   (i.e., minsplit is max(5, ceiling(min_support * n))). This is not
+#'   user-configurable.
 #'
-#' @details
-#' Dummy forms come from a shallow (\code{maxdepth = 2}) \code{rpart} tree fit to the partial
-#' residuals of the current model. We extract up to two splits:
-#' \itemize{
-#'   \item Single cutoff dummy (e.g., \code{x >= c})
-#'   \item Double cutoff dummy (e.g., \code{c1 < x < c2})
-#' }
-#' The function then picks the form (linear, single-split dummy, or double-split dummy)
-#' that yields the lowest AIC/BIC. Variables listed in \code{exclude_vars} will be forced to remain
-#' linear (dummy transformations are never attempted).
+#'   Dummy forms come from a shallow (\code{maxdepth = 2})
+#'   \code{rpart} tree fit to the partial residuals of the current model. We
+#'   extract up to two splits:
+#'   \itemize{
+#'     \item Single cutoff dummy (e.g., \code{x >= c})
+#'     \item Double cutoff dummy (e.g., \code{c1 < x < c2})
+#'   }
 #'
+#'   The function then picks the form (linear, single-split dummy, or
+#'   double-split dummy) that yields the lowest AIC/BIC. Variables listed in
+#'   \code{exclude_vars} will be forced to remain linear (dummy transformations
+#'   are never attempted).
 #' @param X A data frame of predictors (no response).
 #' @param Y A numeric vector (the response).
-#' @param minsplit Minimum number of observations in a node to consider splitting. Default = 5.
-#' @param direction Stepwise strategy: \code{"forward"}, \code{"backward"}, or \code{"both"}. Default = \code{"backward"}.
-#' @param criterion A character string: either \code{"AIC"} or \code{"BIC"}. Default = \code{"AIC"}.
-#' @param exclude_vars A character vector of variable names to exclude from dummy transformations.
-#'   These variables will always be treated as linear. Default = \code{NULL}.
-#' @param verbose Logical; if \code{TRUE}, prints messages for debugging. Default = \code{FALSE}.
+#' @param min_support Minimum fraction (0-0.5) of observations required in
+#'   either group after a dummy split. Default = 0.1.
+#' @param min_improvement Minimum required improvement in AIC/BIC for accepting
+#'   a dummy split or variable transformation. Default = 3.
+#' @param direction Stepwise strategy: \code{"forward"}, \code{"backward"}, or
+#'   \code{"both"}. Default = \code{"backward"}.
+#' @param criterion A character string: either \code{"AIC"} or \code{"BIC"}.
+#'   Default = \code{"AIC"}.
+#' @param exclude_vars A character vector of variable names to exclude from
+#'   dummy transformations. These variables will always be treated as linear.
+#'   Default = \code{NULL}.
+#' @param verbose Logical; if \code{TRUE}, prints messages for debugging.
+#'   Default = \code{FALSE}.
 #' @param ... Additional arguments (currently unused).
-#'
 #' @return A named list of decisions, where each element is a list with:
 #' \describe{
 #'   \item{type}{Either \code{"linear"} or \code{"dummy"}.}
 #'   \item{cutoff}{A numeric vector of length 1 or 2 (the chosen split points).}
 #' }
-#'
 #' @importFrom stats lm AIC BIC coef
 #' @importFrom rpart rpart rpart.control
 #' @keywords internal
 #'
 decide_variable_type_iterative <- function(X, Y,
-                                           minsplit = 5,
-                                           direction = c("backward","forward","both"),
+                                           min_support = 0.1,
+                                           min_improvement = 3,
+                                           direction = c(
+                                             "backward","forward","both"),
                                            criterion = c("AIC", "BIC"),
                                            exclude_vars = NULL,
                                            verbose   = FALSE,
@@ -55,9 +66,9 @@ decide_variable_type_iterative <- function(X, Y,
   df_design <- data.frame(Y = Y)  # initial design matrix with just Y
   decisions <- list()
 
-  #--------------------------------------------------------------------------
+  #-----------------------------------------------------------------------------
   # 1) HELPER FUNCTIONS
-  #--------------------------------------------------------------------------
+  #-----------------------------------------------------------------------------
   add_var_to_design <- function(df, x_col, var_name, type, cutoffs = NULL) {
     df_new <- df
     if (type == "linear") {
@@ -104,20 +115,18 @@ decide_variable_type_iterative <- function(X, Y,
     }
   }
 
-  find_best_form <- function(mod_current, df_current, x_col, var_name, minsplit) {
-    # If var_name is excluded, return linear only
-    if (var_name %in% exclude_vars) {
-      return(list(aic = Inf, type = "linear", cutoff = NULL))
-    }
+  find_best_form <- function(mod_current, df_current, x_col,
+                             var_name, min_support) {
+    if (var_name %in% exclude_vars) return(list(aic = Inf, type = "linear",
+                                                cutoff = NULL))
 
-    # -- 1) Linear
     df_lin  <- add_var_to_design(df_current, x_col, var_name, "linear")
     mod_lin <- lm(Y ~ ., data = df_lin)
     lin_val <- get_crit(mod_lin)
 
-    # -- 2) Dummy using partial residuals
     part_resid <- get_partial_resid(mod_current, x_col, var_name)
     tree_df    <- data.frame(y = part_resid, x = x_col)
+    minsplit <- max(5, ceiling(min_support * nrow(tree_df)))
     tmp_tree   <- rpart::rpart(
       formula = y ~ x,
       data    = tree_df,
@@ -126,16 +135,23 @@ decide_variable_type_iterative <- function(X, Y,
 
     dummy_val  <- Inf
     chosen_cut <- NULL
+    dummy_support <- 0
 
     if (!is.null(tmp_tree$splits) && nrow(tmp_tree$splits) >= 1) {
       splits_sorted <- sort(tmp_tree$splits[, "index"])
       single_cut    <- splits_sorted[1]
 
       # Single dummy
-      df_dummy_s1  <- add_var_to_design(df_current, x_col, var_name, "dummy", single_cut)
-      mod_dummy_s1 <- lm(Y ~ ., data = df_dummy_s1)
-      s1_val       <- get_crit(mod_dummy_s1)
-
+      dcol1 <- as.numeric(x_col >= single_cut)
+      s1_support <- mean(dcol1)
+      if (s1_support > min_support && s1_support < (1 - min_support)) {
+        df_dummy_s1  <- add_var_to_design(df_current, x_col,
+                                          var_name, "dummy", single_cut)
+        mod_dummy_s1 <- lm(Y ~ ., data = df_dummy_s1)
+        s1_val       <- get_crit(mod_dummy_s1)
+      } else {
+        s1_val <- Inf
+      }
       best_dummy_val  <- s1_val
       best_dummy_cuts <- single_cut
 
@@ -143,9 +159,16 @@ decide_variable_type_iterative <- function(X, Y,
       if (length(splits_sorted) >= 2) {
         c1 <- splits_sorted[1]
         c2 <- splits_sorted[2]
-        df_dummy_s2  <- add_var_to_design(df_current, x_col, var_name, "dummy", c(c1, c2))
-        mod_dummy_s2 <- lm(Y ~ ., data = df_dummy_s2)
-        s2_val       <- get_crit(mod_dummy_s2)
+        dcol2 <- as.numeric(x_col > c1 & x_col < c2)
+        s2_support <- mean(dcol2)
+        if (s2_support > min_support && s2_support < (1 - min_support)) {
+          df_dummy_s2  <- add_var_to_design(df_current, x_col,
+                                            var_name, "dummy", c(c1, c2))
+          mod_dummy_s2 <- lm(Y ~ ., data = df_dummy_s2)
+          s2_val       <- get_crit(mod_dummy_s2)
+        } else {
+          s2_val <- Inf
+        }
 
         if (s2_val < s1_val) {
           best_dummy_val  <- s2_val
@@ -157,17 +180,17 @@ decide_variable_type_iterative <- function(X, Y,
       chosen_cut <- best_dummy_cuts
     }
 
-    # Compare final values
-    if (lin_val <= dummy_val) {
-      list(aic = lin_val, type = "linear", cutoff = NULL)
-    } else {
+    # min_improvement threshold (only allow if improvement is big enough)
+    if ((lin_val - dummy_val) >= min_improvement) {
       list(aic = dummy_val, type = "dummy", cutoff = chosen_cut)
+    } else {
+      list(aic = lin_val, type = "linear", cutoff = NULL)
     }
   }
 
-  #--------------------------------------------------------------------------
+  #-----------------------------------------------------------------------------
   # 2) INITIAL SETUP
-  #--------------------------------------------------------------------------
+  #-----------------------------------------------------------------------------
   # "backward" => start by picking best univariate form for each var
   if (direction == "backward") {
     for (var_name in names(X)) {
@@ -189,15 +212,17 @@ decide_variable_type_iterative <- function(X, Y,
         df_current  = df_design,
         x_col       = x_col,
         var_name    = var_name,
-        minsplit    = minsplit
+        min_support = min_support
       )
-      decisions[[var_name]] <- list(type = best_form$type, cutoff = best_form$cutoff)
+      decisions[[var_name]] <- list(type = best_form$type,
+                                    cutoff = best_form$cutoff)
       df_design <- add_var_to_design(
         df_design, x_col, var_name, best_form$type, best_form$cutoff
       )
 
       if (verbose) {
-        message(sprintf("Initial [%s]: %s = %.3f", var_name, criterion, best_form$aic))
+        message(sprintf("Initial [%s]: %s = %.3f", var_name, criterion,
+                        best_form$aic))
       }
     }
   }
@@ -211,9 +236,9 @@ decide_variable_type_iterative <- function(X, Y,
 
   unused_vars <- setdiff(names(X), names(decisions))
 
-  #--------------------------------------------------------------------------
+  #-----------------------------------------------------------------------------
   # 3) MAIN LOOP
-  #--------------------------------------------------------------------------
+  #-----------------------------------------------------------------------------
   improvement <- TRUE
   while (improvement) {
     improvement      <- FALSE
@@ -223,9 +248,8 @@ decide_variable_type_iterative <- function(X, Y,
     best_switch_from <- NULL
     best_new_val     <- best_val
 
-    #---------------------------------------------
     # (A) Forward or both => try adding new variables
-    #---------------------------------------------
+    #---------------------------------------------------------------------------
     if (direction %in% c("forward", "both") && length(unused_vars) > 0) {
       for (var_name in unused_vars) {
         x_col <- X[[var_name]]
@@ -234,8 +258,11 @@ decide_variable_type_iterative <- function(X, Y,
           next
         }
 
-        form_info <- find_best_form(mod_current, df_design, x_col, var_name, minsplit)
-        if (form_info$aic < best_new_val) {
+        form_info <- find_best_form(mod_current, df_design, x_col,
+                                    var_name, min_support)
+
+        if ((best_val - form_info$aic) > min_improvement &&
+            form_info$aic < best_new_val) {
           best_new_val     <- form_info$aic
           best_var_choice  <- var_name
           best_type        <- form_info$type
@@ -245,9 +272,8 @@ decide_variable_type_iterative <- function(X, Y,
       }
     }
 
-    #---------------------------------------------
     # (B) Backward or both => try removing or switching existing variables
-    #---------------------------------------------
+    #---------------------------------------------------------------------------
     if (direction %in% c("backward", "both")) {
       vars_in_model <- names(decisions)
 
@@ -259,7 +285,8 @@ decide_variable_type_iterative <- function(X, Y,
         mod_drop <- lm(Y ~ ., data = df_drop)
         drop_val <- get_crit(mod_drop)
 
-        if (drop_val < best_new_val) {
+        if ((best_val - drop_val) > min_improvement &&
+            drop_val < best_new_val) {
           best_new_val     <- drop_val
           best_var_choice  <- var_name
           best_type        <- "remove"
@@ -270,8 +297,11 @@ decide_variable_type_iterative <- function(X, Y,
         # Try switching forms
         df_temp  <- df_drop
         mod_temp <- mod_drop
-        form_info <- find_best_form(mod_temp, df_temp, x_col, var_name, minsplit)
-        if (form_info$aic < best_new_val) {
+        form_info <- find_best_form(mod_temp, df_temp, x_col,
+                                    var_name, min_support)
+
+        if ((best_val - form_info$aic) > min_improvement &&
+            form_info$aic < best_new_val) {
           best_new_val     <- form_info$aic
           best_var_choice  <- var_name
           best_type        <- form_info$type
@@ -281,9 +311,8 @@ decide_variable_type_iterative <- function(X, Y,
       }
     }
 
-    #---------------------------------------------
     # (C) Forward or both => re-check switching existing variables
-    #---------------------------------------------
+    #---------------------------------------------------------------------------
     if (direction %in% c("forward", "both")) {
       for (var_name in names(decisions)) {
         current_type <- decisions[[var_name]]$type
@@ -291,9 +320,11 @@ decide_variable_type_iterative <- function(X, Y,
 
         df_temp  <- remove_var_from_design(df_design, var_name, current_type)
         mod_temp <- lm(Y ~ ., data = df_temp)
-        form_info <- find_best_form(mod_temp, df_temp, x_col, var_name, minsplit)
+        form_info <- find_best_form(mod_temp, df_temp, x_col,
+                                    var_name, min_support)
 
-        if (form_info$aic < best_new_val) {
+        if ((best_val - form_info$aic) > min_improvement &&
+            form_info$aic < best_new_val) {
           best_new_val     <- form_info$aic
           best_var_choice  <- var_name
           best_type        <- form_info$type
@@ -303,29 +334,36 @@ decide_variable_type_iterative <- function(X, Y,
       }
     }
 
-    #---------------------------------------------
     # (D) Implement best improvement if found
-    #---------------------------------------------
+    #---------------------------------------------------------------------------
     if (!is.null(best_var_choice) && best_new_val < best_val) {
       improvement <- TRUE
 
-      if (!is.null(best_switch_from) && best_switch_from != "remove" && best_type == "remove") {
+      if (!is.null(best_switch_from) && best_switch_from != "remove" &&
+          best_type == "remove") {
+
         # Removing a variable
-        df_design <- remove_var_from_design(df_design, best_var_choice, best_switch_from)
+        df_design <- remove_var_from_design(df_design, best_var_choice,
+                                            best_switch_from)
         decisions[[best_var_choice]] <- NULL
         unused_vars <- union(unused_vars, best_var_choice)
 
         if (verbose) {
-          message(sprintf("Removed '%s': new %s = %.3f", best_var_choice, criterion, best_new_val))
+          message(sprintf("Removed '%s': new %s = %.3f", best_var_choice,
+                          criterion, best_new_val))
         }
 
-      } else if (!is.null(best_switch_from) && best_switch_from %in% c("linear","dummy") &&
+      } else if (!is.null(best_switch_from) &&
+                 best_switch_from %in% c("linear","dummy") &&
                  best_type != "remove") {
         # Switching forms
-        df_design <- remove_var_from_design(df_design, best_var_choice, best_switch_from)
-        df_design <- add_var_to_design(df_design, X[[best_var_choice]], best_var_choice,
+        df_design <- remove_var_from_design(df_design, best_var_choice,
+                                            best_switch_from)
+        df_design <- add_var_to_design(df_design, X[[best_var_choice]],
+                                       best_var_choice,
                                        best_type, best_cutoff)
-        decisions[[best_var_choice]] <- list(type = best_type, cutoff = best_cutoff)
+        decisions[[best_var_choice]] <- list(type = best_type,
+                                             cutoff = best_cutoff)
 
         if (verbose) {
           message(sprintf("Switched '%s' to '%s': new %s = %.3f",
@@ -334,9 +372,11 @@ decide_variable_type_iterative <- function(X, Y,
 
       } else {
         # Adding a brand-new variable
-        df_design <- add_var_to_design(df_design, X[[best_var_choice]], best_var_choice,
+        df_design <- add_var_to_design(df_design, X[[best_var_choice]],
+                                       best_var_choice,
                                        best_type, best_cutoff)
-        decisions[[best_var_choice]] <- list(type = best_type, cutoff = best_cutoff)
+        decisions[[best_var_choice]] <- list(type = best_type,
+                                             cutoff = best_cutoff)
         unused_vars <- setdiff(unused_vars, best_var_choice)
 
         if (verbose) {
@@ -351,5 +391,5 @@ decide_variable_type_iterative <- function(X, Y,
     }
   }
 
-  decisions
+  return(decisions)
 }

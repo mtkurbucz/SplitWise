@@ -18,11 +18,13 @@ test_that("splitwise function handles different transformation modes", {
   formula <- mpg ~ .
 
   # Test univariate transformation mode
-  model_uni <- splitwise(formula, data, transformation_mode = "univariate", trace = 0)
+  model_uni <- splitwise(formula, data, transformation_mode = "univariate",
+                         verbose = FALSE)
   expect_s3_class(model_uni, "splitwise_lm")
 
   # Test iterative transformation mode
-  model_iter <- splitwise(formula, data, transformation_mode = "iterative", trace = 0)
+  model_iter <- splitwise(formula, data, transformation_mode = "iterative",
+                         verbose = FALSE)
   expect_s3_class(model_iter, "splitwise_lm")
 })
 
@@ -31,15 +33,18 @@ test_that("splitwise function respects stepwise direction parameter", {
   formula <- mpg ~ .
 
   # Test forward selection
-  model_forward <- splitwise(formula, data, direction = "forward", trace = 0)
+  model_forward <- splitwise(formula, data, direction = "forward",
+                             verbose = FALSE)
   expect_s3_class(model_forward, "splitwise_lm")
 
   # Test backward elimination
-  model_backward <- splitwise(formula, data, direction = "backward", trace = 0)
+  model_backward <- splitwise(formula, data, direction = "backward",
+                             verbose = FALSE)
   expect_s3_class(model_backward, "splitwise_lm")
 
   # Test both directions
-  model_both <- splitwise(formula, data, direction = "both", trace = 0)
+  model_both <- splitwise(formula, data, direction = "both",
+                          verbose = FALSE)
   expect_s3_class(model_both, "splitwise_lm")
 })
 
@@ -53,7 +58,7 @@ test_that("splitwise function handles BIC mode", {
     formula = formula,
     data = data,
     criterion = "BIC",
-    trace = 0
+    verbose = FALSE
   )
   expect_s3_class(model_bic, "splitwise_lm")
 
@@ -76,7 +81,7 @@ test_that("splitwise function respects exclude_vars parameter", {
     formula = formula,
     data = data,
     exclude_vars = excluded,
-    trace = 0
+    verbose = FALSE
   )
   expect_s3_class(model_excl, "splitwise_lm")
 

@@ -1,12 +1,12 @@
 Package: SplitWise
 Type: Package
-Title: 'SplitWise': Hybrid Stepwise Regression with Single-Split Dummy Encoding
-Version: 1.0.1
+Title: Hybrid Stepwise Regression with Single-Split Dummy Encoding
+Version: 1.0.2
 Authors@R: c(
   person("Marcell T.", "Kurbucz", email = "m.kurbucz@ucl.ac.uk", role = c("aut", "cre")),
   person("Nikolaos", "Tzivanakis", role = "aut"),
   person("Nilufer Sari", "Aslam", role = "aut"),
-  person("Adam", "Sykulski", role = "aut"))
+  person("Adam M.", "Sykulski", role = "aut"))
 Description: Implements 'SplitWise', a hybrid regression approach that transforms
     numeric variables into either single-split (0/1) dummy variables or retains
     them as continuous predictors. The transformation is followed by stepwise

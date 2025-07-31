@@ -1,12 +1,12 @@
 #' @title Transform Features (Univariate Logic)
-#' @description
-#'   Given the decisions (dummy or linear) for each predictor, produce a transformed
-#'   data frame. Dummy columns are 0/1 based on the cutoff.
 #'
+#' @description Given the decisions (dummy or linear) for each predictor,
+#'   produce a transformed data frame. Dummy columns are 0/1 based on the
+#'   cutoff.
 #' @param X Original predictor data frame.
 #' @param decisions The list returned by \code{decide_variable_type_univariate}.
-#'
-#' @return A new data frame with either the original column or a dummy column for each variable.
+#' @return A new data frame with either the original column or a dummy column
+#'   for each variable.
 #' @keywords internal
 #'
 transform_features_univariate <- function(X, decisions) {

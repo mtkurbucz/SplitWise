@@ -12,10 +12,12 @@ transform_features_iterative(X, decisions)
 \item{decisions}{Output of \code{decide_variable_type_iterative}.}
 }
 \value{
-A data frame with the chosen variables in their final forms (dummy or linear).
+A data frame with the chosen variables in their final forms (dummy
+  or linear).
 }
 \description{
-Once \code{decide_variable_type_iterative} has chosen which variables to add (and how),
-  we can build a final data frame from those decisions.
+Once \code{decide_variable_type_iterative} has chosen which
+  variables to add (and how), we can build a final data frame from those
+  decisions.
 }
 \keyword{internal}
